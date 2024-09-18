@@ -204,7 +204,7 @@ const candidateAlpha = (index: number): string => {
   return range[index];
 };
 
-app.listen(8080, () => {
+app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
 });
 
