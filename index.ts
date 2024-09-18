@@ -3,6 +3,7 @@ import bAbi from "./abi/BlocVote.json";
 import { ethers } from "ethers";
 import { AlchemyProvider } from "ethers";
 import { InfuraProvider } from "ethers";
+import bodyParser from "body-parser";
 
 const app = express();
 const port = 4000;
@@ -22,6 +23,12 @@ const provider = new InfuraProvider(
 );
 const signer = new ethers.Wallet(privateKey, provider);
 const contract = new ethers.Contract(ca, abi, signer);
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // read election chairman
 app.get("/chairman", async (req, res) => {
@@ -107,6 +114,19 @@ app.get("/candidate/new/:name/:office", async (req, res) => {
   }
 });
 
+app.get("/vote", async (req, res) => {
+  start();
+  try {
+    const { votes, voter_ids } = req.body;
+    console.log({ votes, voter_ids });
+
+    res.json({ status: "processed" });
+  } catch (error) {
+    console.log({ error });
+    res.json({ error });
+  }
+});
+
 // cast vote
 app.get("/vote/:voter/:candidate", async (req, res) => {
   const voter = req.params.voter;
@@ -117,7 +137,7 @@ app.get("/vote/:voter/:candidate", async (req, res) => {
   try {
     const vote = await contract.castVote(candidateId, parseInt(voter));
     console.log({ vote });
-    return res.json({ vote });
+    return res.json({ votehash: vote.hash });
   } catch (error) {
     console.log({ error });
     return res.json({ status: "An error occurred casting the vote" });
@@ -184,7 +204,7 @@ const candidateAlpha = (index: number): string => {
   return range[index];
 };
 
-app.listen(port, () => {
+app.listen(8080, () => {
   console.log(`Server listening on port ${port}`);
 });
 
