@@ -166,6 +166,12 @@ app.get("/result", async (req, res) => {
   }
 });
 
+app.get("/keep-alive", async (req, res) => {
+  const response = { status: "live" };
+  console.log(response);
+  res.json(response);
+});
+
 // function for converting index from alpha to numeric
 const candidateIndex = (alpha: string): number => {
   const range = ["a", "b", "c", "d", "e", "f", "g", "h"];
