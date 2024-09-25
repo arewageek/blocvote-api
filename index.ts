@@ -6,7 +6,7 @@ import { InfuraProvider } from "ethers";
 import bodyParser from "body-parser";
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT;
 
 let blocVote: any;
 const rpc = process.env.ALCHEMY_RPC_URL!;
@@ -128,7 +128,7 @@ app.get("/vote", async (req, res) => {
 });
 
 // cast vote
-app.get("/vote/:voter/:candidate", async (req, res) => {
+app.post("/vote/:voter/:candidate", async (req, res) => {
   const voter = req.params.voter;
   const candidate = req.params.candidate;
 
@@ -136,7 +136,7 @@ app.get("/vote/:voter/:candidate", async (req, res) => {
   start();
   try {
     const vote = await contract.castVote(candidateId, parseInt(voter));
-    console.log({ vote });
+    console.log({ vote, votehash: vote.hash });
     return res.json({ votehash: vote.hash });
   } catch (error) {
     console.log({ error });
@@ -186,12 +186,6 @@ app.get("/result", async (req, res) => {
   }
 });
 
-app.get("/keep-alive", async (req, res) => {
-  const response = { status: "live" };
-  console.log(response);
-  res.json(response);
-});
-
 // function for converting index from alpha to numeric
 const candidateIndex = (alpha: string): number => {
   const range = ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -204,8 +198,8 @@ const candidateAlpha = (index: number): string => {
   return range[index];
 };
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+app.listen(4000, () => {
+  console.log(`Server listening on port 4000`);
 });
 
 const start = () => console.log("Processing...");
