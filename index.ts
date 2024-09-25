@@ -188,7 +188,7 @@ app.get("/result", async (req, res) => {
 
 // function for converting index from alpha to numeric
 const candidateIndex = (alpha: string): number => {
-  const range = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const range = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
   return range.indexOf(alpha);
 };
 
