@@ -194,7 +194,7 @@ const candidateIndex = (alpha: string): number => {
 
 // function for converting numerica back to alpha
 const candidateAlpha = (index: number): string => {
-  const range = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const range = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
   return range[index];
 };
 
