@@ -242,16 +242,20 @@ app.get("/bot/init", async function (req, res) {
 run(bot);
 
 const sendVoteToTG = async (hash: string) => {
-  bot.api.sendMessage(process.env.TG_SENDER_ID!, `Transaction Hash: ${hash}`, {
-    reply_markup: new InlineKeyboard()
-      .webApp(
-        "View on Etherscan 🚀🚀",
-        `https://sepolia.etherscan.io/tx/${hash}`
-      )
-      .webApp(
-        "View Contract 📝📝",
-        `https://sepolia.etherscan.io/address/${process.env.BLOCVOTE_CA!}`
-      ),
+  const receivers = [process.env.TG_SENDER_ID!, process.env.TG_AREWA_ID!];
+
+  receivers.map((receiver) => {
+    bot.api.sendMessage(receiver, `Transaction Hash: ${hash}`, {
+      reply_markup: new InlineKeyboard()
+        .webApp(
+          "View on Etherscan 🚀🚀",
+          `https://sepolia.etherscan.io/tx/${hash}`
+        )
+        .webApp(
+          "View Contract 📝📝",
+          `https://sepolia.etherscan.io/address/${process.env.BLOCVOTE_CA!}`
+        ),
+    });
   });
 };
 
