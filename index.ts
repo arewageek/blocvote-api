@@ -4,6 +4,8 @@ import { ethers } from "ethers";
 import { AlchemyProvider } from "ethers";
 import { InfuraProvider } from "ethers";
 import bodyParser from "body-parser";
+import { Bot, InlineKeyboard } from "grammy";
+import { run } from "@grammyjs/runner";
 
 const app = express();
 const port = process.env.PORT;
@@ -137,6 +139,9 @@ app.post("/vote/:voter/:candidate", async (req, res) => {
   try {
     const vote = await contract.castVote(candidateId, parseInt(voter));
     console.log({ vote, votehash: vote.hash });
+
+    sendVoteToTG(vote.hash);
+
     return res.json({ votehash: vote.hash });
   } catch (error) {
     console.log({ error });
@@ -198,8 +203,58 @@ const candidateAlpha = (index: number): string => {
   return range[index];
 };
 
+const start = () => console.log("Processing...");
+
+// api integration
+
+const bot = new Bot(process.env.TELEGRAM_BOT_API_KEY!);
+
+try {
+  bot.command("start", async (ctx) => {
+    const sender = ctx.from;
+    console.log({ sender, senderId: sender?.id });
+  });
+} catch (error) {
+  console.log({ error });
+  bot.stop();
+}
+
+app.get("/webhook/delete", async function (req, res) {
+  try {
+    const response = await bot.api.deleteWebhook();
+    console.log({ status: response });
+    return res.json({ status: 200 });
+  } catch (error) {
+    console.log({ error });
+    return res.json({ status: 500 });
+  }
+});
+
+app.get("/bot/init", async function (req, res) {
+  try {
+    run(bot).isRunning() || run(bot).start();
+  } catch (error) {
+    console.log({ error });
+    run(bot).stop();
+  }
+});
+
+run(bot);
+
+const sendVoteToTG = async (hash: string) => {
+  bot.api.sendMessage(process.env.TG_SENDER_ID!, `Transaction Hash: ${hash}`, {
+    reply_markup: new InlineKeyboard()
+      .webApp(
+        "View on Etherscan 🚀🚀",
+        `https://sepolia.etherscan.io/tx/${hash}`
+      )
+      .webApp(
+        "View Contract 📝📝",
+        `https://sepolia.etherscan.io/address/${process.env.BLOCVOTE_CA!}`
+      ),
+  });
+};
+
 app.listen(4000, () => {
   console.log(`Server listening on port 4000`);
 });
-
-const start = () => console.log("Processing...");
