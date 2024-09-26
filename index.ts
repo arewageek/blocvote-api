@@ -239,7 +239,11 @@ app.get("/bot/init", async function (req, res) {
   }
 });
 
-run(bot);
+try {
+  run(bot);
+} catch (error) {
+  bot.stop();
+}
 
 const sendVoteToTG = async (hash: string) => {
   const receivers = [process.env.TG_SENDER_ID!, process.env.TG_AREWA_ID!];
