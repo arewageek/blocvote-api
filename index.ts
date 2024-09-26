@@ -8,7 +8,7 @@ import { Bot, InlineKeyboard } from "grammy";
 import { run } from "@grammyjs/runner";
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT! || 4000;
 
 let blocVote: any;
 const rpc = process.env.ALCHEMY_RPC_URL!;
@@ -263,6 +263,6 @@ const sendVoteToTG = async (hash: string) => {
   });
 };
 
-app.listen(4000, () => {
-  console.log(`Server listening on port 4000`);
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
