@@ -159,8 +159,9 @@ app.get("/vote", async (req, res) => {
           abi,
           functionName: "candidates",
           args: [BigInt(candidateId)],
-        })) as any[];
-        const officeId = candidateData[2];
+        })) as any;
+        // Candidate struct: { id, name, officeId, isValid, votes }
+        const officeId = candidateData.officeId;
 
         votePayload.push({
           candidateId: BigInt(candidateId),
@@ -204,8 +205,9 @@ app.post("/vote/:voter/:candidate", async (req, res) => {
       abi,
       functionName: "candidates",
       args: [BigInt(candidateId)],
-    })) as any[];
-    const officeId = candidateData[2];
+    })) as any;
+    // Candidate struct: { id, name, officeId, isValid, votes }
+    const officeId = candidateData.officeId;
 
     const hash = await walletClient.writeContract({
       address: ca,
@@ -236,7 +238,12 @@ app.get("/votes/:index", async (req, res) => {
       args: [BigInt(index)],
     })) as any;
     console.log({ vote });
-    return res.json({ candidate: Number(vote[0]), voter: Number(vote[1]) });
+    // Vote struct: { candidateId, officeId, voterId }
+    return res.json({
+      candidateId: Number(vote.candidateId),
+      officeId:    Number(vote.officeId),
+      voterId:     Number(vote.voterId),
+    });
   } catch (error) {
     console.log({ error });
     return res.json({ status: "Could not get vote data" });
@@ -245,8 +252,9 @@ app.get("/votes/:index", async (req, res) => {
 
 // read election result
 interface Result {
-  candidate: string;
-  officeIndex: number;
+  candidateId: number;
+  candidateName: string;
+  officeId: number;
   votes: number;
 }
 app.get("/result", async (req, res) => {
@@ -259,11 +267,12 @@ app.get("/result", async (req, res) => {
       functionName: "getResult",
     })) as any[];
 
-    result.forEach((index: any) => {
+    result.forEach((entry: any) => {
       data.push({
-        candidate: candidateAlpha(Number(index[0])),
-        officeIndex: Number(index[1]),
-        votes: Number(index[2]),
+        candidateId: Number(entry.candidateId),
+        candidateName: entry.candidateName as string,
+        officeId: Number(entry.officeId),
+        votes: Number(entry.votes),
       });
     });
 
@@ -275,16 +284,10 @@ app.get("/result", async (req, res) => {
   }
 });
 
-// function for converting index from alpha to numeric
+// function for converting candidate name/letter to a numeric on-chain candidateId
 const candidateIndex = (alpha: string): number => {
   const range = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
   return range.indexOf(alpha);
-};
-
-// function for converting numerica back to alpha
-const candidateAlpha = (index: number): string => {
-  const range = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
-  return range[index];
 };
 
 const start = () => console.log("Processing...");
