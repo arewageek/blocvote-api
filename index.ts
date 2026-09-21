@@ -159,9 +159,9 @@ app.get("/vote", async (req, res) => {
           abi,
           functionName: "candidates",
           args: [BigInt(candidateId)],
-        })) as any;
-        // Candidate struct: { id, name, officeId, isValid, votes }
-        const officeId = candidateData.officeId;
+        })) as any[];
+        // Candidate tuple: [id, name, officeId, isValid, votes]
+        const officeId = candidateData[2];
 
         votePayload.push({
           candidateId: BigInt(candidateId),
@@ -205,9 +205,9 @@ app.post("/vote/:voter/:candidate", async (req, res) => {
       abi,
       functionName: "candidates",
       args: [BigInt(candidateId)],
-    })) as any;
-    // Candidate struct: { id, name, officeId, isValid, votes }
-    const officeId = candidateData.officeId;
+    })) as any[];
+    // Candidate tuple: [id, name, officeId, isValid, votes]
+    const officeId = candidateData[2];
 
     const hash = await walletClient.writeContract({
       address: ca,
@@ -236,13 +236,13 @@ app.get("/votes/:index", async (req, res) => {
       abi,
       functionName: "votes",
       args: [BigInt(index)],
-    })) as any;
+    })) as any[];
     console.log({ vote });
-    // Vote struct: { candidateId, officeId, voterId }
+    // Vote tuple: [candidateId, officeId, voterId]
     return res.json({
-      candidateId: Number(vote.candidateId),
-      officeId:    Number(vote.officeId),
-      voterId:     Number(vote.voterId),
+      candidateId: Number(vote[0]),
+      officeId:    Number(vote[1]),
+      voterId:     Number(vote[2]),
     });
   } catch (error) {
     console.log({ error });

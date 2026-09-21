@@ -11,9 +11,9 @@ mock.module("viem", () => {
       readContract: async ({ functionName, args }: any) => {
         if (functionName === "chairman") return "0x123ChairmanAddress";
         if (functionName === "offices") return ["OfficeName", "Office Description", 100n, true, 10n];
-        if (functionName === "candidates") return ["CandidateName", "Candidate Description", 100n, true, 20n];
-        if (functionName === "votes") return [1n, 2n];
-        if (functionName === "getResult") return [[1n, 2n, 50n], [2n, 2n, 30n]];
+        if (functionName === "candidates") return [1n, "Candidate Description", 100n, true, 20n];
+        if (functionName === "votes") return [1n, 2n, 3n];
+        if (functionName === "getResult") return [{ candidateId: 1n, candidateName: "Candidate", officeId: 2n, votes: 50n }];
         if (functionName === "waitForTransactionReceipt") return { status: "success" };
         return null;
       },
@@ -117,7 +117,7 @@ describe("BlocVote API Flow", () => {
   test("GET /votes/:index should return specific vote data", async () => {
     const res = await request(app).get("/votes/0");
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ candidate: 1, voter: 2 });
+    expect(res.body).toEqual({ candidateId: 1, officeId: 2, voterId: 3 });
   });
 
   test("GET /result should return results", async () => {
