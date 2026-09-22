@@ -10,7 +10,7 @@ mock.module("viem", () => {
     createPublicClient: () => ({
       readContract: async ({ functionName, args }: any) => {
         if (functionName === "chairman") return "0x123ChairmanAddress";
-        if (functionName === "offices") return ["OfficeName", "Office Description", 100n, true, 10n];
+        if (functionName === "offices") return [1n, "Office Description", true, 10n];
         if (functionName === "candidates") return [1n, "Candidate Description", 100n, true, 20n];
         if (functionName === "votes") return [1n, 2n, 3n];
         if (functionName === "getResult") return [{ candidateId: 1n, candidateName: "Candidate", officeId: 2n, votes: 50n }];
@@ -84,34 +84,67 @@ describe("BlocVote API Flow", () => {
     expect(res.body.office.name).toBe("Candidate Description");
   });
 
-  test("GET /office/new/:office should return tx hash or registered", async () => {
-    const res = await request(app).get("/office/new/President");
+  test("POST /office should return tx hash or registered", async () => {
+    const res = await request(app).post("/office").send({ name: "President" });
     expect(res.status).toBe(200);
     expect(res.body.registered).toBeDefined();
     expect(res.body.registered.status).toBe("success");
   });
 
-  test("GET /candidate/new/:name/:office should return registered status", async () => {
-    const res = await request(app).get("/candidate/new/JohnDoe/1");
+  test("POST /office should return 400 if name is missing", async () => {
+    const res = await request(app).post("/office").send({});
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Office name is required");
+  });
+
+  test("POST /candidate should return registered status", async () => {
+    const res = await request(app).post("/candidate").send({ name: "JohnDoe", officeId: 1 });
     expect(res.status).toBe(200);
     expect(res.body.registered).toBeDefined();
     expect(res.body.registered.status).toBe("success");
   });
 
-  test("POST /vote/:voter/:candidate should cast a vote and return hash", async () => {
-    const res = await request(app).post("/vote/1/A");
+  test("POST /candidate should return 400 if fields are missing", async () => {
+    const res = await request(app).post("/candidate").send({ name: "JohnDoe" });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Candidate name and officeId are required");
+  });
+
+  test("POST /vote should cast a single vote and return hash", async () => {
+    const res = await request(app).post("/vote").send({ voter: 1, candidate: "A" });
     expect(res.status).toBe(200);
     expect(res.body.votehash).toBe("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
   });
 
-  test("GET /vote should process batch votes", async () => {
-    const res = await request(app).get("/vote").send({
+  test("POST /vote should handle invalid candidate gracefully", async () => {
+    const res = await request(app).post("/vote").send({ voter: 1, candidate: "Z" });
+    expect(res.status).toBe(500); // Because it throws an error in Viem trying to fetch candidate details or cast
+  });
+
+  test("POST /vote should return 400 if fields are missing", async () => {
+    const res = await request(app).post("/vote").send({ voter: 1 });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("voter and candidate are required");
+  });
+
+  test("POST /vote/batch should process batch votes", async () => {
+    const res = await request(app).post("/vote/batch").send({
       votes: ["A", "B"],
       voter_ids: [1, 2]
     });
     expect(res.status).toBe(200);
     expect(res.body.votes).toEqual(["A", "B"]);
     expect(res.body.voter_ids).toEqual([1, 2]);
+    expect(res.body.votehash).toBe("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
+  });
+
+  test("POST /vote/batch should return 400 on mismatched arrays", async () => {
+    const res = await request(app).post("/vote/batch").send({
+      votes: ["A", "B"],
+      voter_ids: [1] // mismatched length
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("Invalid payload format");
   });
 
   test("GET /votes/:index should return specific vote data", async () => {
@@ -128,8 +161,8 @@ describe("BlocVote API Flow", () => {
     expect(res.body.result[0].votes).toBe(50);
   });
   
-  test("GET /bot/init should return Bot started", async () => {
-    const res = await request(app).get("/bot/init");
+  test("POST /bot/init should return Bot started", async () => {
+    const res = await request(app).post("/bot/init");
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "Bot started" });
   });
